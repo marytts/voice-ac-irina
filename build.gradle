@@ -1,35 +1,37 @@
 plugins {
-    id 'de.dfki.mary.voicebuilding-festvox' version '5.2.2'
-    id 'de.dfki.mary.voicebuilding-legacy' version '5.2.2'
+    id 'de.dfki.mary.voicebuilding-festvox' version '5.5-SNAPSHOT'
+    id 'de.dfki.mary.voicebuilding-legacy' version '5.5-SNAPSHOT'
 }
 
 group 'de.dfki.mary'
 version '5.3-SNAPSHOT'
 
-voice {
-    name = 'ac-irina'
-    language = 'ru'
-    region = 'RU'
-    gender = 'female'
-    type = 'unit selection'
-    description = 'A female Russian unit selection voice'
-    license {
-        name = 'Creative Commons Attribution-ShareAlike 3.0 Unported'
-        shortName = 'CC-BY-SA'
-        url = 'http://mary.dfki.de/download/by-sa-3.0.html'
+marytts {
+    voice {
+        name = 'ac-irina'
+        language = 'ru'
+        region = 'RU'
+        gender = 'female'
+        type = 'unit selection'
+        description = 'A female Russian unit selection voice'
+        license {
+            name = 'Creative Commons Attribution-ShareAlike 3.0 Unported'
+            shortName = 'CC-BY-SA'
+            url = 'http://mary.dfki.de/download/by-sa-3.0.html'
+        }
+        samplingRate = 16000
     }
-    samplingRate = 16000
 }
 
 repositories {
     ivy {
-        url 'http://mary.dfki.de/repo'
-        layout 'maven'
-    }
-    ivy {
-        url 'http://alphacephei.com/test/tts/'
-        layout 'pattern', {
-            artifact '[module]-[revision].[ext]'
+        url 'http://alphacephei.com/tts'
+        allowInsecureProtocol = true
+        patternLayout {
+            artifact '[artifact]-[revision].[ext]'
+        }
+        metadataSources {
+            artifact()
         }
     }
 }
@@ -55,52 +57,59 @@ task simpleLab(type: Copy) {
     }
 }
 
-legacyInit {
-    dependsOn wav, simpleLab, text
-    def basenameListFile = file("$buildDir/basenames.lst")
-    outputs.files basenameListFile
+task simpleText {
+    dependsOn processDataResources
+    def out_dir = new File("$project.buildDir/text")
+    ext.dest_dir = out_dir
+    outputs.dir(out_dir)
+
     doLast {
-        basenameListFile.withWriter { basenameList ->
-            fileTree(wav.destDir).collect {
-                it.name - '.wav'
-            }.minus([
-                'utt_000064',
-                'utt_000208',
-                'utt_000214',
-                'utt_000217',
-                'utt_000255',
-                'utt_000786',
-                'utt_001014',
-                'utt_001026',
-                'utt_001034',
-                'utt_001090',
-                'utt_001172',
-                'utt_001233',
-                'utt_001311',
-                'utt_001419',
-                'utt_001474',
-                'utt_001631',
-                'utt_001635',
-                'utt_001757',
-                'utt_001789',
-                'utt_001827',
-                'utt_001831',
-                'utt_001840',
-                'utt_001861',
-                'utt_001873',
-                'utt_001879',
-                'utt_001961',
-                'utt_002035',
-                'utt_002181',
-                'utt_002194',
-                'utt_002222',
-                'utt_002356',
-                'utt_002370',
-                'utt_002421',
-                'utt_002442'
-            ]).each {
-                basenameList.writeLine it
-            }
+        out_dir.mkdirs()
+        println("$processDataResources.destinationDir/txt.done.data")
+        (new File("$processDataResources.destinationDir/txt.done.data")).eachLine { line ->
+            def elts = line.split(' "')
+            def filename = elts[0].replace(/( /, "") + ".txt"
+            println(filename)
+            (new File("$out_dir/$filename")).text = elts[1].replace(/" )/, "")
         }
     }
+}
+
+basenames {
+    dependsOn wav, simpleLab, simpleText
+    include '*'
+    exclude 'utt_000064',
+    'utt_000208',
+    'utt_000214',
+    'utt_000217',
+    'utt_000255',
+    'utt_000786',
+    'utt_001014',
+    'utt_001026',
+    'utt_001034',
+    'utt_001090',
+    'utt_001172',
+    'utt_001233',
+    'utt_001311',
+    'utt_001419',
+    'utt_001474',
+    'utt_001631',
+    'utt_001635',
+    'utt_001757',
+    'utt_001789',
+    'utt_001827',
+    'utt_001831',
+    'utt_001840',
+    'utt_001861',
+    'utt_001873',
+    'utt_001879',
+    'utt_001961',
+    'utt_002035',
+    'utt_002181',
+    'utt_002194',
+    'utt_002222',
+    'utt_002356',
+    'utt_002370',
+    'utt_002421',
+    'utt_002442'
 }
